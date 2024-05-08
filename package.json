@@ -1,0 +1,29 @@
+{
+  "name": "signer-service",
+  "version": "1.0.0",
+  "type": "commonjs",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@ethereumjs/tx": "^5.3.0",
+    "@google-cloud/kms": "^4.2.0",
+    "@web3-kms-signer/core": "^1.0.13",
+    "@web3-kms-signer/kms-wallets": "^1.0.6",
+    "ethers": "^6.12.1",
+    "fast-crc32c": "github:ChainSafe/node-fast-crc32c",
+    "uuid": "^8.3.2",
+    "web3": "^4.8.0"
+  },
+  "devDependencies": {
+    "@types/fast-crc32c": "^2.0.0",
+    "@types/uuid": "^9.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.1.3"
+  }
+}
