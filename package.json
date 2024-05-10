@@ -11,19 +11,18 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@ethereumjs/common": "^3.2.0",
+    "@ethereumjs/tx": "^4.2.0",
+    "@ethereumjs/util": "^8.1.0",
     "@google-cloud/kms": "^4.2.0",
+    "asn1js": "^3.0.5",
     "axios": "^1.6.8",
+    "bn.js": "^5.2.1",
     "ethers": "^6.12.1",
     "fast-crc32c": "github:ChainSafe/node-fast-crc32c",
     "fastify": "^4.27.0",
     "uuid": "^8.3.2",
-    "web3": "^4.8.0",
-    "bn.js": "^5.2.1",
-    "asn1js": "^3.0.5",
-    "@ethereumjs/util": "^8.1.0",
-    "@ethereumjs/common": "^3.2.0",
-    "@ethereumjs/tx": "^4.2.0"
-
+    "web3": "^4.8.0"
   },
   "devDependencies": {
     "@types/fast-crc32c": "^2.0.0",

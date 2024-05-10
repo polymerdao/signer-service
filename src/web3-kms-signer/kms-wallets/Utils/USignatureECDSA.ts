@@ -58,21 +58,29 @@ export class USignatureECDSA {
      * All we have to do is call this function twice, once with v = `candidate_1`, and in case that does not give us
      * the right address, a second time with v = `candidate_2`. One of the two calls should result in the Eth address.
      */
-    public static calculateV(address: Buffer, digest: Buffer, r: Buffer, s: Buffer, chainId?: bigint) : bigint {
-        /**
-         * This is the function to find the right v value
-         * There are two matching signatues on the elliptic curve
-         * we need to find the one that matches to our public key
-         * it can be v = `candidate_1` or v = `candidate_2`
-         */
-        const candidate_1 = (chainId) ? (chainId * BigInt(2) + BigInt(35)) : BigInt(27);
-        const candidate_2 = (chainId) ? (chainId * BigInt(2) + BigInt(36)) : BigInt(28);
-        if (Buffer.compare(address, UPublickey.fromVRS(digest, candidate_1, r, s, chainId).getAddress()) === 0) {
-            return candidate_1;
-        } else if (Buffer.compare(address, UPublickey.fromVRS(digest, candidate_2, r, s, chainId).getAddress()) === 0) {
-            return candidate_2;
-        } else {
-            return BigInt(-1);
-        }
+    public static calculateV(address: Buffer, digest: Buffer, r: Buffer, s: Buffer, txType: number = 0, chainId?: bigint,): bigint {
+      /**
+       * This is the function to find the right v value
+       * There are two matching signatues on the elliptic curve
+       * we need to find the one that matches to our public key
+       * it can be v = `candidate_1` or v = `candidate_2`
+       */
+      // Default Y parity candidates
+      let candidate_1 = 0n;
+      let candidate_2 = 1n;
+
+      // For legacy tx types candidates are different
+      if (txType === 0) {
+        candidate_1 = (chainId) ? (chainId * BigInt(2) + BigInt(35)) : BigInt(27);
+        candidate_2 = (chainId) ? (chainId * BigInt(2) + BigInt(36)) : BigInt(28);
+      }
+
+      if (Buffer.compare(address, UPublickey.fromVRS(digest, candidate_1, r, s, chainId).getAddress()) === 0) {
+        return candidate_1;
+      } else if (Buffer.compare(address, UPublickey.fromVRS(digest, candidate_2, r, s, chainId).getAddress()) === 0) {
+        return candidate_2;
+      } else {
+        return BigInt(-1);
+      }
     }
 }

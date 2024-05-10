@@ -40,15 +40,15 @@ export class KMSWallets extends Wallets {
      * Signs a digest with a private key identified by keyId, using the KMSProvider.
      * @param account An object containing the keyId and optional address of the signing account.
      * @param digest The digest to be signed.
+     * @param txType The type of transaction to sign.
      * @param chainId Optional chain ID to specify the blockchain network.
      * @returns A Promise that resolves to an ECDSASignature object.
      */
-    public async ecsign(account: { keyId: string, address?: Buffer }, digest: Buffer, chainId?: bigint) : Promise<ECDSASignature> {
-
+    public async ecsign(account: { keyId: string, address?: Buffer }, digest: Buffer, txType: number = 0, chainId?: bigint, ) : Promise<ECDSASignature> {
         const {r, s} = USignatureECDSA.decodeRS(await this.provider.signDigest(account.keyId, digest));
 
         const address = (!account.address) ? await this.getAddress(account.keyId) : account.address;
-        const v = USignatureECDSA.calculateV(address, digest, r, s, chainId);
+        const v = USignatureECDSA.calculateV(address, digest, r, s, txType, chainId);
         if (v == BigInt(-1)) {
             throw new Error("ServerKMS: v is invalid.");
         }

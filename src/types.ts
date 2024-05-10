@@ -14,7 +14,7 @@ export const TransactionArgsSchema = z.object({
   to: AddressSchema,
   gasLimit: z.string().optional(),
   gas: z.string(),
-  gasPrice: z.string().optional(),
+  gasPrice: z.string().nullable().optional(),
   maxFeePerGas: z.string().nullable().optional(),
   maxPriorityFeePerGas: z.string().nullable().optional(),
   value: z.string(),

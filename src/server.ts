@@ -46,7 +46,7 @@ async function handleEthSignTransaction(transactionArgs: TransactionArgs) {
     keyRingId: keyRingId
   });
 
-  const signer = new Signer(wallets, Number(transactionArgs.chainId));
+  const kmsSigner = new Signer(wallets, Number(transactionArgs.chainId));
   if (!transactionArgs.gasLimit && transactionArgs.gas) {
     transactionArgs.gasLimit = transactionArgs.gas;
   }
@@ -61,7 +61,7 @@ async function handleEthSignTransaction(transactionArgs: TransactionArgs) {
       transactionArgs.type = '0x0';
     }
   }
-  return await signer.signTransaction({keyId: keyId}, transactionArgs)
+  return await kmsSigner.signTransaction({keyId: keyId}, transactionArgs)
 }
 
 const start = async () => {

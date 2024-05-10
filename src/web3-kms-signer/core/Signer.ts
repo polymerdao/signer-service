@@ -1,4 +1,11 @@
-import { addHexPrefix, fromSigned, toUnsigned, bigIntToBuffer, hashPersonalMessage } from '@ethereumjs/util'
+import {
+    addHexPrefix,
+    fromSigned,
+    toUnsigned,
+    bigIntToBuffer,
+    hashPersonalMessage,
+    bufferToBigInt, toBuffer
+} from '@ethereumjs/util'
 import { TxData } from '@ethereumjs/tx';
 import { Common } from '@ethereumjs/common'
 import { Wallets } from './Wallets';
@@ -37,10 +44,11 @@ export class Signer {
      * @returns A Promise that resolves to the serialized transaction as a '0x'-prefixed hex string.
      */
     public async signTransaction(account: { keyId: string, address?: Buffer }, txData: TxData) {
-        const digest     = TransactionFactory.fromTxData(txData, { common: this.common }).getMessageToSign()
-        const {r, s, v}  = await this.wallets.ecsign(account, digest, this.common?.chainId());
+        let tx = TransactionFactory.fromTxData(txData, { common: this.common });
+        const digest     = tx.getMessageToSign()
+        const txType = Number(bufferToBigInt(toBuffer(txData.type)))
+        const {r, s, v}  = await this.wallets.ecsign(account, digest, txType, this.common?.chainId());
         const signed     = TransactionFactory.fromTxData({...txData, r, s, v}, { common: this.common });
-    
         return addHexPrefix(signed.serialize().toString('hex'));
     }
 
