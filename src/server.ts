@@ -17,6 +17,12 @@ let LOCATION_ID = process.env.LOCATION_ID!
 let keyRingId = process.env.KEY_RING_ID!
 let keyId = process.env.KEY_ID!
 
+kmsProvider.setPath({
+  projectId: PROJECT_ID,
+  locationId: LOCATION_ID,
+  keyRingId: keyRingId
+});
+
 app.post('/', async (request, reply) => {
   const {method, params} = request.body as { method: string, params: any };
 
@@ -40,11 +46,6 @@ app.post('/', async (request, reply) => {
 
 async function handleEthSignTransaction(transactionArgs: TransactionArgs) {
   console.log('Transaction Args:', transactionArgs);
-  kmsProvider.setPath({
-    projectId: PROJECT_ID,
-    locationId: LOCATION_ID,
-    keyRingId: keyRingId
-  });
 
   const kmsSigner = new Signer(wallets, Number(transactionArgs.chainId));
   if (!transactionArgs.gasLimit && transactionArgs.gas) {
