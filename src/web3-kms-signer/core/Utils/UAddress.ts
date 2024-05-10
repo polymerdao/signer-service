@@ -19,7 +19,7 @@ export class UAddress {
      * Returns the wallet's address as a "0x" prefixed hex
      */
     public getAddressHex(): string {
-        return ethutil.bufferToHex(this.getAddress()).toLowerCase();
+        return UBuffer.bufferToHex(this.getAddress()).toLowerCase();
     }
 
     /**
@@ -35,7 +35,7 @@ export class UAddress {
      */
 
     public static fromPublickey(input: Buffer | string) {
-        return new UAddress(ethutil.publicToAddress(UBuffer.bufferOrHex(input)));
+        return new UAddress(Buffer.from(ethutil.publicToAddress(UBuffer.bufferOrHex(input))));
     }
 
     public static fromAddress(input: Buffer | string) {

@@ -24,7 +24,7 @@ export class UPublickey {
      * Returns the wallet's public key as a "0x" prefixed hex
      */
     public getPublickeyHex(): string {
-        return ethutil.bufferToHex(this.getPublickey()).toLowerCase();
+        return UBuffer.bufferToHex(this.getPublickey()).toLowerCase();
     }
 
     /**
@@ -54,7 +54,7 @@ export class UPublickey {
      */
 
     public static fromPrivatekey(input: Buffer | string) {
-        return new UPublickey(ethutil.privateToPublic(UBuffer.bufferOrHex(input)));
+        return new UPublickey(Buffer.from(ethutil.privateToPublic(UBuffer.bufferOrHex(input))));
     }
 
     public static fromPublickey(input: Buffer | string) {
@@ -62,6 +62,6 @@ export class UPublickey {
     }
 
     public static fromVRS(digest: Buffer, v: bigint, r: Buffer, s: Buffer, chainId?: bigint) {
-        return new UPublickey(ethutil.ecrecover(digest, v, r, s, chainId));
+        return new UPublickey(Buffer.from(ethutil.ecrecover(digest, v, r, s, chainId)));
     }
 }

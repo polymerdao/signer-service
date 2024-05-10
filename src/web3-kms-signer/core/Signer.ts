@@ -2,11 +2,10 @@ import {
     addHexPrefix,
     fromSigned,
     toUnsigned,
-    bigIntToBuffer,
     hashPersonalMessage,
-    bufferToBigInt, toBuffer
+    bigIntToBytes
 } from '@ethereumjs/util'
-import { TxData } from '@ethereumjs/tx';
+import { TypedTxData } from '@ethereumjs/tx';
 import { Common } from '@ethereumjs/common'
 import { Wallets } from './Wallets';
 import { UBuffer } from './Utils/UBuffer';
@@ -43,13 +42,13 @@ export class Signer {
      * @param txData The transaction data to sign.
      * @returns A Promise that resolves to the serialized transaction as a '0x'-prefixed hex string.
      */
-    public async signTransaction(account: { keyId: string, address?: Buffer }, txData: TxData) {
+    public async signTransaction(account: { keyId: string, address?: Buffer }, txData: TypedTxData) {
         let tx = TransactionFactory.fromTxData(txData, { common: this.common });
-        const digest     = tx.getMessageToSign()
-        const txType = Number(bufferToBigInt(toBuffer(txData.type)))
-        const {r, s, v}  = await this.wallets.ecsign(account, digest, txType, this.common?.chainId());
+        const digest     =  Buffer.from(tx.getHashedMessageToSign())
+
+        const {r, s, v}  = await this.wallets.ecsign(account, digest, tx.type, this.common?.chainId());
         const signed     = TransactionFactory.fromTxData({...txData, r, s, v}, { common: this.common });
-        return addHexPrefix(signed.serialize().toString('hex'));
+        return addHexPrefix(Buffer.from(signed.serialize()).toString('hex'));
     }
 
     /**
@@ -61,7 +60,7 @@ export class Signer {
      */
     public async signMessage(account: { keyId: string, address?: Buffer }, message: string) {
         const digest = hashPersonalMessage(Buffer.from(message));
-        return this.signDigest(account, digest);
+        return this.signDigest(account, Buffer.from(digest));
     }
 
     /**
@@ -73,9 +72,9 @@ export class Signer {
     public async signDigest(account: { keyId: string, address?: Buffer }, digest: string | Buffer) {
         const {r, s, v} = await this.wallets.ecsign(account, UBuffer.bufferOrHex(digest));
 
-        const rStr = toUnsigned(fromSigned(r)).toString('hex');
-        const sStr = toUnsigned(fromSigned(s)).toString('hex');
-        const vStr = bigIntToBuffer(v).toString('hex');
+        const rStr = Buffer.from(toUnsigned(fromSigned(r))).toString('hex');
+        const sStr = Buffer.from(toUnsigned(fromSigned(s))).toString('hex');
+        const vStr = Buffer.from(bigIntToBytes(v)).toString('hex');
 
         return addHexPrefix(rStr.concat(sStr, vStr));
     }
