@@ -68,7 +68,7 @@ async function handleEthSignTransaction(transactionArgs: TransactionArgs) {
 const start = async () => {
   try {
     let port = parseInt(process.env.PORT ?? "8000");
-    const host = process.env.HOST ?? "localhost";
+    const host = process.env.HOST ?? "0.0.0.0";
     await app.listen({port, host});
     console.log(`Server running at https://localhost:${port}/`);
   } catch (err) {
