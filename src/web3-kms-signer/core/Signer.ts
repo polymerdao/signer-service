@@ -10,6 +10,7 @@ import { Common } from '@ethereumjs/common'
 import { Wallets } from './Wallets';
 import { UBuffer } from './Utils/UBuffer';
 import { TransactionFactory } from "@ethereumjs/tx";
+import { CustomCrypto } from "@ethereumjs/common";
 
 /**
  * The Signer class provides functionality to sign Ethereum transactions and messages using
@@ -30,10 +31,12 @@ export class Signer {
      * The chain ID is used to configure the network for transactions.
      * @param wallets An instance of Wallets for key management and signing.
      * @param chainId Optional chain ID to specify the blockchain network.
+     * @param eips Optional array of EIPs to enable for the transaction.
+     * @param customCrypto Optional custom crypto object to use for hashing and signing.
      */
-    constructor(wallets: Wallets, chainId?: number) {
+    constructor(wallets: Wallets, chainId?: number, eips?: number[], customCrypto?: CustomCrypto) {
         this.wallets = wallets;
-        this.common = (chainId) ? Common.custom({ chainId: chainId, networkId: chainId }) : undefined;
+        this.common = (chainId) ? Common.custom({ chainId: chainId, networkId: chainId }, {eips, customCrypto}) : undefined;
     }
 
     /**
