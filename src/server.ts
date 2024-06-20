@@ -44,6 +44,11 @@ app.post('/', async (request, reply) => {
   }
 });
 
+app.get('/address', async (_, reply) => {
+  const address = await wallets.getAddressHex(keyId);
+  return reply.code(200).send(address);
+})
+
 async function handleEthSignTransaction(transactionArgs: TransactionArgs) {
   console.log('Transaction Args:', transactionArgs);
 
