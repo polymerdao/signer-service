@@ -67,7 +67,7 @@ async function handleEthSignTransaction(transactionArgs: TransactionArgs) {
       transactionArgs.type = '0x0';
     }
   }
-  return await kmsSigner.signTransaction({keyId: keyId}, transactionArgs)
+  return await kmsSigner.signTransaction({keyId: keyId}, {...transactionArgs, data: transactionArgs.input})
 }
 
 const start = async () => {
@@ -75,7 +75,7 @@ const start = async () => {
     let port = parseInt(process.env.PORT ?? "8000");
     const host = process.env.HOST ?? "0.0.0.0";
     await app.listen({port, host});
-    console.log(`Server running at https://localhost:${port}/`);
+    console.log(`Server running at http://localhost:${port}/`);
   } catch (err) {
     console.error(err);
     process.exit(1);
