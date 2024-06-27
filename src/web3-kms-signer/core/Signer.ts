@@ -3,7 +3,7 @@ import {
     fromSigned,
     toUnsigned,
     hashPersonalMessage,
-    bigIntToBytes
+    bigIntToBytes, Kzg
 } from '@ethereumjs/util'
 import { TypedTxData } from '@ethereumjs/tx';
 import { Common } from '@ethereumjs/common'
@@ -30,10 +30,11 @@ export class Signer {
      * The chain ID is used to configure the network for transactions.
      * @param wallets An instance of Wallets for key management and signing.
      * @param chainId Optional chain ID to specify the blockchain network.
+     * @param kzg Optional KZG instance for cryptographic operations.
      */
-    constructor(wallets: Wallets, chainId?: number) {
+    constructor(wallets: Wallets, chainId?: number, kzg?: Kzg) {
         this.wallets = wallets;
-        this.common = (chainId) ? Common.custom({ chainId: chainId, networkId: chainId }) : undefined;
+        this.common = (chainId) ? Common.custom({ chainId: chainId, networkId: chainId }, {eips: [4844], customCrypto: {kzg: kzg}}) : undefined;
     }
 
     /**

@@ -23,7 +23,7 @@ export const TransactionArgsSchema = z.object({
   accessList: AccessListSchema.optional(),
   chainId: z.string(),
   blobVersionedHashes: z.array(z.string().regex(/^0x[a-fA-F0-9]+$/, 'Invalid hash')).optional(),
-  blobFeeCap: z.string().optional(),
+  maxFeePerBlobGas: z.string().optional(),
   type: z.string().optional(),
 });
 

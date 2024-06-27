@@ -3,6 +3,7 @@ import { TransactionArgs, TransactionArgsSchema } from './types';
 import { KMSProviderGCP } from "./KMSProviderGCP";
 import { KMSWallets } from "./web3-kms-signer/kms-wallets";
 import { Signer } from "./web3-kms-signer/core";
+import { loadKZG } from "kzg-wasm";
 
 
 const app = fastify({
@@ -51,20 +52,24 @@ app.get('/address', async (_, reply) => {
 
 async function handleEthSignTransaction(transactionArgs: TransactionArgs) {
   console.log('Transaction Args:', transactionArgs);
+  const kzg = await loadKZG()
 
-  const kmsSigner = new Signer(wallets, Number(transactionArgs.chainId));
+  const kmsSigner = new Signer(wallets, Number(transactionArgs.chainId), kzg);
   if (!transactionArgs.gasLimit && transactionArgs.gas) {
     transactionArgs.gasLimit = transactionArgs.gas;
   }
+
   if (!transactionArgs.type) {
     if (transactionArgs.maxFeePerGas && transactionArgs.maxPriorityFeePerGas) {
       transactionArgs.type = '0x2';
-    } else if (transactionArgs.accessList) {
+    } else {
+      transactionArgs.type = '0x0';
+    }
+
+    if (transactionArgs.accessList) {
       transactionArgs.type = '0x1';
     } else if (transactionArgs.blobVersionedHashes && transactionArgs.blobVersionedHashes.length > 0) {
       transactionArgs.type = '0x3';
-    } else {
-      transactionArgs.type = '0x0';
     }
   }
   return await kmsSigner.signTransaction({keyId: keyId}, {...transactionArgs, data: transactionArgs.input})
