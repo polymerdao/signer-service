@@ -10,7 +10,12 @@ const app = fastify({
   logger: true,
 });
 
-const kmsProvider = new KMSProviderGCP({});
+const gcpConfig = {
+  keyFilename: "/Users/inkvi/dev/signer-service/keyfile.json"
+};
+const kmsProvider = new KMSProviderGCP(gcpConfig);
+
+// const kmsProvider = new KMSProviderGCP({});
 const wallets = new KMSWallets(kmsProvider);
 
 let PROJECT_ID = process.env.PROJECT_ID!
@@ -66,7 +71,7 @@ async function handleEthSignTransaction(transactionArgs: TransactionArgs) {
       transactionArgs.type = '0x0';
     }
 
-    if (transactionArgs.accessList) {
+    if (transactionArgs.accessList && transactionArgs.accessList.length > 0) {
       transactionArgs.type = '0x1';
     } else if (transactionArgs.blobVersionedHashes && transactionArgs.blobVersionedHashes.length > 0) {
       transactionArgs.type = '0x3';
