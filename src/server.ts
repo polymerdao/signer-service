@@ -66,7 +66,7 @@ async function handleEthSignTransaction(transactionArgs: TransactionArgs) {
       transactionArgs.type = '0x0';
     }
 
-    if (transactionArgs.accessList) {
+    if (transactionArgs.accessList && transactionArgs.accessList.length > 0) {
       transactionArgs.type = '0x1';
     } else if (transactionArgs.blobVersionedHashes && transactionArgs.blobVersionedHashes.length > 0) {
       transactionArgs.type = '0x3';
