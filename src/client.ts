@@ -20,10 +20,10 @@ const main = async () => {
   const kzg = await loadKZG()
 
   let batcherAddress = '0xb79c84166a348b38894bafa95b4f8e286e325e1e';
-  const txType: number = 3;
+  const txType: number = 2;
 
   const url = 'http://127.0.0.1:8000'; // Change the URL accordingly
-  const rpc = "https://eth-sepolia.public.blastapi.io"
+  const rpc = "https://1rpc.io/sepolia"
   const web3 = new Web3(rpc);
   const provider = new ethers.JsonRpcProvider(rpc);
 
