@@ -18,7 +18,7 @@
     "asn1js": "^3.0.5",
     "axios": "^1.6.8",
     "bn.js": "^5.2.1",
-    "ethers": "^6.12.1",
+    "ethers": "^6.13.1",
     "fast-crc32c": "github:ChainSafe/node-fast-crc32c",
     "fastify": "^4.27.0",
     "uuid": "^8.3.2",
