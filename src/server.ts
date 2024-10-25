@@ -17,6 +17,7 @@ let PROJECT_ID = process.env.PROJECT_ID!
 let LOCATION_ID = process.env.LOCATION_ID!
 let keyRingId = process.env.KEY_RING_ID!
 let keyId = process.env.KEY_ID!
+let TX_LIMIT = BigInt(process.env.TX_LIMIT!)
 
 kmsProvider.setPath({
   projectId: PROJECT_ID,
@@ -35,6 +36,12 @@ app.post('/', async (request, reply) => {
         reply.code(400).send({error: 'Invalid request'});
         return;
       }
+      
+      let feesValid = await feesTooHigh(result.data);
+      if (!feesValid) {
+        reply.code(400).send({error: `Fees too high TX_LIMIT [${TX_LIMIT}] reached`});
+        return;
+      }
       let signedTx = await handleEthSignTransaction(result.data);
       reply.code(200).send({result: signedTx});
       return;
@@ -49,6 +56,34 @@ app.get('/address', async (_, reply) => {
   const address = await wallets.getAddressHex(keyId);
   return reply.code(200).send(address);
 })
+
+async function feesTooHigh(transactionArgs: TransactionArgs)  {
+  let maxFeePerGas = BigInt(0);
+  let maxPriorityFeePerGas = BigInt(0);
+  let maxFeePerBlobGas = BigInt(0);
+  if (transactionArgs.maxFeePerGas ){
+     maxFeePerGas = BigInt(transactionArgs.maxFeePerGas);
+  }  
+  if (transactionArgs.maxPriorityFeePerGas) {
+     maxPriorityFeePerGas = BigInt(transactionArgs.maxPriorityFeePerGas);
+  }
+  if (transactionArgs.maxFeePerBlobGas) {
+     maxFeePerBlobGas = BigInt(transactionArgs.maxFeePerBlobGas);
+  }
+
+  var gasCost = BigInt(transactionArgs.gas) * (maxFeePerGas + maxPriorityFeePerGas);
+  if (gasCost > TX_LIMIT) {
+    return false;  
+  }
+
+  if (transactionArgs.blobVersionedHashes && transactionArgs.blobVersionedHashes.length > 0) {
+    var blobGasCost = BigInt(transactionArgs.gas) * maxFeePerBlobGas;
+    if (blobGasCost > TX_LIMIT) {
+      return false;
+    }
+  }
+  return true;
+}
 
 async function handleEthSignTransaction(transactionArgs: TransactionArgs) {
   console.log('Transaction Args:', transactionArgs);
