@@ -17,6 +17,8 @@ let PROJECT_ID = process.env.PROJECT_ID!
 let LOCATION_ID = process.env.LOCATION_ID!
 let keyRingId = process.env.KEY_RING_ID!
 let keyId = process.env.KEY_ID!
+let TX_GASPRICE_LIMIT = BigInt(process.env.TXPRICE_LIMIT!)
+let TX_BLOBPRICE_LIMIT = BigInt(process.env.TX_BLOBPRICE_LIMIT!)
 
 kmsProvider.setPath({
   projectId: PROJECT_ID,
@@ -35,6 +37,15 @@ app.post('/', async (request, reply) => {
         reply.code(400).send({error: 'Invalid request'});
         return;
       }
+      
+   
+      if (TX_BLOBPRICE_LIMIT > 0 || TX_GASPRICE_LIMIT > 0) {
+        let areFeesTooHigh = await feesTooHigh(result.data);
+        if (areFeesTooHigh) {          
+          reply.code(400).send({error: `Fees too high TX_GAS_LIMIT|TX_BLOBPRICE_LIMIT [${TX_GASPRICE_LIMIT} |${TX_BLOBPRICE_LIMIT}] reached`});
+          return;
+        }
+      }
       let signedTx = await handleEthSignTransaction(result.data);
       reply.code(200).send({result: signedTx});
       return;
@@ -49,6 +60,38 @@ app.get('/address', async (_, reply) => {
   const address = await wallets.getAddressHex(keyId);
   return reply.code(200).send(address);
 })
+
+async function feesTooHigh(transactionArgs: TransactionArgs)  {
+  let maxFeePerGas = BigInt(0);
+  let maxPriorityFeePerGas = BigInt(0);
+  let maxFeePerBlobGas = BigInt(0);
+
+  
+
+  if (transactionArgs.maxFeePerGas ){
+     maxFeePerGas = BigInt(transactionArgs.maxFeePerGas);
+  }  
+  if (transactionArgs.maxPriorityFeePerGas) {
+     maxPriorityFeePerGas = BigInt(transactionArgs.maxPriorityFeePerGas);
+  }
+  if (transactionArgs.maxFeePerBlobGas) {
+     maxFeePerBlobGas = BigInt(transactionArgs.maxFeePerBlobGas);
+  }
+
+  var gasPrice = (maxFeePerGas + maxPriorityFeePerGas);
+  if (gasPrice > TX_GASPRICE_LIMIT) {
+    console.error('Tx fees too high: %d > %d', gasPrice, TX_GASPRICE_LIMIT);
+    return true;  
+  }
+
+  if (transactionArgs.blobVersionedHashes && transactionArgs.blobVersionedHashes.length > 0) {
+    if (maxFeePerBlobGas > TX_BLOBPRICE_LIMIT) {
+      console.error('Blob fees too high: %d > %d', maxFeePerBlobGas, TX_BLOBPRICE_LIMIT );
+      return true;
+    }
+  }
+  return false;
+}
 
 async function handleEthSignTransaction(transactionArgs: TransactionArgs) {
   console.log('Transaction Args:', transactionArgs);
