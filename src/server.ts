@@ -41,7 +41,7 @@ app.post('/', async (request, reply) => {
    
       if (TX_BLOBPRICE_LIMIT > 0 || TX_GASPRICE_LIMIT > 0) {
         let areFeesTooHigh = await feesTooHigh(result.data);
-        if (areFeesTooHigh) {
+        if (areFeesTooHigh) {          
           reply.code(400).send({error: `Fees too high TX_GAS_LIMIT|TX_BLOBPRICE_LIMIT [${TX_GASPRICE_LIMIT} |${TX_BLOBPRICE_LIMIT}] reached`});
           return;
         }
@@ -80,11 +80,13 @@ async function feesTooHigh(transactionArgs: TransactionArgs)  {
 
   var gasPrice = (maxFeePerGas + maxPriorityFeePerGas);
   if (gasPrice > TX_GASPRICE_LIMIT) {
+    console.error('Tx fees too high: %d > %d', gasPrice, TX_GASPRICE_LIMIT);
     return true;  
   }
 
   if (transactionArgs.blobVersionedHashes && transactionArgs.blobVersionedHashes.length > 0) {
     if (maxFeePerBlobGas > TX_BLOBPRICE_LIMIT) {
+      console.error('Blob fees too high: %d > %d', maxFeePerBlobGas, TX_BLOBPRICE_LIMIT );
       return true;
     }
   }
