@@ -38,19 +38,13 @@ app.post('/', async (request, reply) => {
         return;
       }
       
-      if (TX_GASPRICE_LIMIT <= 0) {
-        reply.code(400).send({error: `Invalid TX_LIMIT [${TX_GASPRICE_LIMIT}]`});
-        return;
-      }
-      if (TX_BLOBPRICE_LIMIT <= 0) {
-        reply.code(400).send({error: `Invalid TX_BLOBPRICE_LIMIT [${TX_BLOBPRICE_LIMIT}]`});
-        return;
-      }
-
-      let areFeesTooHigh = await feesTooHigh(result.data);
-      if (areFeesTooHigh) {
-        reply.code(400).send({error: `Fees too high TX_GAS_LIMIT|TX_BLOBPRICE_LIMIT [${TX_GASPRICE_LIMIT} |${TX_BLOBPRICE_LIMIT}] reached`});
-        return;
+   
+      if (TX_BLOBPRICE_LIMIT > 0 || TX_GASPRICE_LIMIT > 0) {
+        let areFeesTooHigh = await feesTooHigh(result.data);
+        if (areFeesTooHigh) {
+          reply.code(400).send({error: `Fees too high TX_GAS_LIMIT|TX_BLOBPRICE_LIMIT [${TX_GASPRICE_LIMIT} |${TX_BLOBPRICE_LIMIT}] reached`});
+          return;
+        }
       }
       let signedTx = await handleEthSignTransaction(result.data);
       reply.code(200).send({result: signedTx});
