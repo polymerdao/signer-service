@@ -17,7 +17,8 @@ let PROJECT_ID = process.env.PROJECT_ID!
 let LOCATION_ID = process.env.LOCATION_ID!
 let keyRingId = process.env.KEY_RING_ID!
 let keyId = process.env.KEY_ID!
-let TX_LIMIT = BigInt(process.env.TX_LIMIT!)
+let TX_GASPRICE_LIMIT = BigInt(process.env.TXPRICE_LIMIT!)
+let TX_BLOBPRICE_LIMIT = BigInt(process.env.TX_BLOBPRICE_LIMIT!)
 
 kmsProvider.setPath({
   projectId: PROJECT_ID,
@@ -37,13 +38,18 @@ app.post('/', async (request, reply) => {
         return;
       }
       
-      if (TX_LIMIT <= 0) {
-        reply.code(400).send({error: `Invalid TX_LIMIT [${TX_LIMIT}]`});
+      if (TX_GASPRICE_LIMIT <= 0) {
+        reply.code(400).send({error: `Invalid TX_LIMIT [${TX_GASPRICE_LIMIT}]`});
         return;
       }
+      if (TX_BLOBPRICE_LIMIT <= 0) {
+        reply.code(400).send({error: `Invalid TX_BLOBPRICE_LIMIT [${TX_BLOBPRICE_LIMIT}]`});
+        return;
+      }
+
       let areFeesTooHigh = await feesTooHigh(result.data);
       if (areFeesTooHigh) {
-        reply.code(400).send({error: `Fees too high TX_LIMIT [${TX_LIMIT}] reached`});
+        reply.code(400).send({error: `Fees too high TX_GAS_LIMIT|TX_BLOBPRICE_LIMIT [${TX_GASPRICE_LIMIT} |${TX_BLOBPRICE_LIMIT}] reached`});
         return;
       }
       let signedTx = await handleEthSignTransaction(result.data);
@@ -78,14 +84,13 @@ async function feesTooHigh(transactionArgs: TransactionArgs)  {
      maxFeePerBlobGas = BigInt(transactionArgs.maxFeePerBlobGas);
   }
 
-  var gasCost = BigInt(transactionArgs.gas) * (maxFeePerGas + maxPriorityFeePerGas);
-  if (gasCost > TX_LIMIT) {
+  var gasPrice = (maxFeePerGas + maxPriorityFeePerGas);
+  if (gasPrice > TX_GASPRICE_LIMIT) {
     return true;  
   }
 
   if (transactionArgs.blobVersionedHashes && transactionArgs.blobVersionedHashes.length > 0) {
-    var blobGasCost = BigInt(transactionArgs.gas) * maxFeePerBlobGas;
-    if (blobGasCost > TX_LIMIT) {
+    if (maxFeePerBlobGas > TX_BLOBPRICE_LIMIT) {
       return true;
     }
   }
