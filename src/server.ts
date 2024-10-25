@@ -37,8 +37,12 @@ app.post('/', async (request, reply) => {
         return;
       }
       
-      let feesValid = await feesTooHigh(result.data);
-      if (!feesValid) {
+      if (TX_LIMIT <= 0) {
+        reply.code(400).send({error: `Invalid TX_LIMIT [${TX_LIMIT}]`});
+        return;
+      }
+      let areFeesTooHigh = await feesTooHigh(result.data);
+      if (areFeesTooHigh) {
         reply.code(400).send({error: `Fees too high TX_LIMIT [${TX_LIMIT}] reached`});
         return;
       }
@@ -61,6 +65,9 @@ async function feesTooHigh(transactionArgs: TransactionArgs)  {
   let maxFeePerGas = BigInt(0);
   let maxPriorityFeePerGas = BigInt(0);
   let maxFeePerBlobGas = BigInt(0);
+
+  
+
   if (transactionArgs.maxFeePerGas ){
      maxFeePerGas = BigInt(transactionArgs.maxFeePerGas);
   }  
@@ -73,16 +80,16 @@ async function feesTooHigh(transactionArgs: TransactionArgs)  {
 
   var gasCost = BigInt(transactionArgs.gas) * (maxFeePerGas + maxPriorityFeePerGas);
   if (gasCost > TX_LIMIT) {
-    return false;  
+    return true;  
   }
 
   if (transactionArgs.blobVersionedHashes && transactionArgs.blobVersionedHashes.length > 0) {
     var blobGasCost = BigInt(transactionArgs.gas) * maxFeePerBlobGas;
     if (blobGasCost > TX_LIMIT) {
-      return false;
+      return true;
     }
   }
-  return true;
+  return false;
 }
 
 async function handleEthSignTransaction(transactionArgs: TransactionArgs) {
