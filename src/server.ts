@@ -20,6 +20,7 @@ let keyId = process.env.KEY_ID!
 let TX_GASPRICE_LIMIT = BigInt(process.env.TXPRICE_LIMIT!)
 let TX_BLOBPRICE_LIMIT = BigInt(process.env.TX_BLOBPRICE_LIMIT!)
 let TX_ALPHA = BigInt(process.env.TX_ALPHA ?? "1")
+let TX_ALPHA = BigInt(process.env.TX_ALPHA ?? "1")
 
 kmsProvider.setPath({
   projectId: PROJECT_ID,
@@ -70,7 +71,7 @@ app.get('/address', async (_, reply) => {
 * @returns New gas limit
 * @brief Assumes that all inputs are non-negative
 */
-function computeLimitEMA(price, limit: bigint, alpha: bigint) {
+function computeLimitEMA(price: bigint, limit: bigint, alpha: bigint) {
   return (price - limit) * alpha / BigInt(100) + limit;
 }
 
