@@ -93,7 +93,7 @@ async function feesTooHigh(transactionArgs: TransactionArgs)  {
   if (transactionArgs.blobVersionedHashes && transactionArgs.blobVersionedHashes.length > 0) {
     if (maxFeePerBlobGas > TX_BLOBPRICE_LIMIT) {
       console.error('Blob fees too high: %d > %d', maxFeePerBlobGas, TX_BLOBPRICE_LIMIT );
-      TX_BLOBPRICE_LIMIT = computeNewGasLimit(gasPrice, TX_BLOBPRICE_LIMIT, TX_ALPHA);
+      TX_BLOBPRICE_LIMIT = computeNewGasLimit(maxFeePerBlobGas, TX_BLOBPRICE_LIMIT, TX_ALPHA);
       return true;
     }
   }
