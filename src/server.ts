@@ -62,7 +62,15 @@ app.get('/address', async (_, reply) => {
   return reply.code(200).send(address);
 })
 
-function computeNewGasLimit(price, limit: bigint, alpha: bigint) {
+/**
+* Computes a new gas limit using exponential moving average.
+* @param price Current transaction price
+* @param limit Current gas limit
+* @param alpha Weighting factor (percentage multiplier)
+* @returns New gas limit
+* @brief Assumes that all inputs are non-negative
+*/
+function computeLimitEMA(price, limit: bigint, alpha: bigint) {
   return (price - limit) * alpha / BigInt(100) + limit;
 }
 
@@ -86,14 +94,14 @@ async function feesTooHigh(transactionArgs: TransactionArgs)  {
   var gasPrice = (maxFeePerGas + maxPriorityFeePerGas);
   if (gasPrice > TX_GASPRICE_LIMIT) {
     console.error('Tx fees too high: %d > %d', gasPrice, TX_GASPRICE_LIMIT);
-    TX_GASPRICE_LIMIT = computeNewGasLimit(gasPrice, TX_GASPRICE_LIMIT, TX_ALPHA);
+    TX_GASPRICE_LIMIT = computeLimitEMA(gasPrice, TX_GASPRICE_LIMIT, TX_ALPHA);
     return true;
   }
 
   if (transactionArgs.blobVersionedHashes && transactionArgs.blobVersionedHashes.length > 0) {
     if (maxFeePerBlobGas > TX_BLOBPRICE_LIMIT) {
       console.error('Blob fees too high: %d > %d', maxFeePerBlobGas, TX_BLOBPRICE_LIMIT );
-      TX_BLOBPRICE_LIMIT = computeNewGasLimit(maxFeePerBlobGas, TX_BLOBPRICE_LIMIT, TX_ALPHA);
+      TX_BLOBPRICE_LIMIT = computeLimitEMA(maxFeePerBlobGas, TX_BLOBPRICE_LIMIT, TX_ALPHA);
       return true;
     }
   }
