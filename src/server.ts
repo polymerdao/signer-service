@@ -70,7 +70,7 @@ app.get('/address', async (_, reply) => {
 * @returns New gas limit
 * @brief Assumes that all inputs are non-negative
 */
-function computeLimitEMA(price, limit: bigint, alpha: bigint) {
+function computeLimitEMA(price: bigint, limit: bigint, alpha: bigint) {
   return (price - limit) * alpha / BigInt(100) + limit;
 }
 
