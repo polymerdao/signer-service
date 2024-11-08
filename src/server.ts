@@ -20,7 +20,6 @@ let keyId = process.env.KEY_ID!
 let TX_GASPRICE_LIMIT = BigInt(process.env.TXPRICE_LIMIT!)
 let TX_BLOBPRICE_LIMIT = BigInt(process.env.TX_BLOBPRICE_LIMIT!)
 let TX_ALPHA = BigInt(process.env.TX_ALPHA ?? "1")
-let TX_ALPHA = BigInt(process.env.TX_ALPHA ?? "1")
 
 kmsProvider.setPath({
   projectId: PROJECT_ID,
