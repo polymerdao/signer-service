@@ -19,6 +19,7 @@ let keyRingId = process.env.KEY_RING_ID!
 let keyId = process.env.KEY_ID!
 let TX_GASPRICE_LIMIT = BigInt(process.env.TXPRICE_LIMIT!)
 let TX_BLOBPRICE_LIMIT = BigInt(process.env.TX_BLOBPRICE_LIMIT!)
+let TX_ALPHA = BigInt(process.env.TX_ALPHA ?? "1")
 
 kmsProvider.setPath({
   projectId: PROJECT_ID,
@@ -37,11 +38,11 @@ app.post('/', async (request, reply) => {
         reply.code(400).send({error: 'Invalid request'});
         return;
       }
-      
-   
+
+
       if (TX_BLOBPRICE_LIMIT > 0 || TX_GASPRICE_LIMIT > 0) {
         let areFeesTooHigh = await feesTooHigh(result.data);
-        if (areFeesTooHigh) {          
+        if (areFeesTooHigh) {
           reply.code(400).send({error: `Fees too high TX_GAS_LIMIT|TX_BLOBPRICE_LIMIT [${TX_GASPRICE_LIMIT} |${TX_BLOBPRICE_LIMIT}] reached`});
           return;
         }
@@ -61,16 +62,28 @@ app.get('/address', async (_, reply) => {
   return reply.code(200).send(address);
 })
 
+/**
+* Computes a new gas limit using exponential moving average.
+* @param price Current transaction price
+* @param limit Current gas limit
+* @param alpha Weighting factor (percentage multiplier)
+* @returns New gas limit
+* @brief Assumes that all inputs are non-negative
+*/
+function computeLimitEMA(price, limit: bigint, alpha: bigint) {
+  return (price - limit) * alpha / BigInt(100) + limit;
+}
+
 async function feesTooHigh(transactionArgs: TransactionArgs)  {
   let maxFeePerGas = BigInt(0);
   let maxPriorityFeePerGas = BigInt(0);
   let maxFeePerBlobGas = BigInt(0);
 
-  
+
 
   if (transactionArgs.maxFeePerGas ){
      maxFeePerGas = BigInt(transactionArgs.maxFeePerGas);
-  }  
+  }
   if (transactionArgs.maxPriorityFeePerGas) {
      maxPriorityFeePerGas = BigInt(transactionArgs.maxPriorityFeePerGas);
   }
@@ -81,12 +94,18 @@ async function feesTooHigh(transactionArgs: TransactionArgs)  {
   var gasPrice = (maxFeePerGas + maxPriorityFeePerGas);
   if (gasPrice > TX_GASPRICE_LIMIT) {
     console.error('Tx fees too high: %d > %d', gasPrice, TX_GASPRICE_LIMIT);
-    return true;  
+    const newGasLimit = computeLimitEMA(gasPrice, TX_GASPRICE_LIMIT, TX_ALPHA);
+    console.log('Updating TX_GASPRICE_LIMIT: %d -> %d', TX_GASPRICE_LIMIT, newGasLimit);
+    TX_GASPRICE_LIMIT = newGasLimit;
+    return true;
   }
 
   if (transactionArgs.blobVersionedHashes && transactionArgs.blobVersionedHashes.length > 0) {
     if (maxFeePerBlobGas > TX_BLOBPRICE_LIMIT) {
       console.error('Blob fees too high: %d > %d', maxFeePerBlobGas, TX_BLOBPRICE_LIMIT );
+      const newBlobLimit = computeLimitEMA(maxFeePerBlobGas, TX_BLOBPRICE_LIMIT, TX_ALPHA);
+      console.log('Updating TX_BLOBPRICE_LIMIT: %d -> %d', TX_BLOBPRICE_LIMIT, newBlobLimit);
+      TX_BLOBPRICE_LIMIT = newBlobLimit;
       return true;
     }
   }
