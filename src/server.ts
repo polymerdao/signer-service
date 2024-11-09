@@ -92,23 +92,25 @@ async function feesTooHigh(transactionArgs: TransactionArgs)  {
   }
 
   var gasPrice = (maxFeePerGas + maxPriorityFeePerGas);
+  const newGasLimit = computeLimitEMA(gasPrice, TX_GASPRICE_LIMIT, TX_ALPHA);
+  console.log('Updating TX_GASPRICE_LIMIT: %d -> %d', TX_GASPRICE_LIMIT, newGasLimit);
+  TX_GASPRICE_LIMIT = newGasLimit;
   if (gasPrice > TX_GASPRICE_LIMIT) {
     console.error('Tx fees too high: %d > %d', gasPrice, TX_GASPRICE_LIMIT);
-    const newGasLimit = computeLimitEMA(gasPrice, TX_GASPRICE_LIMIT, TX_ALPHA);
-    console.log('Updating TX_GASPRICE_LIMIT: %d -> %d', TX_GASPRICE_LIMIT, newGasLimit);
-    TX_GASPRICE_LIMIT = newGasLimit;
     return true;
   }
 
   if (transactionArgs.blobVersionedHashes && transactionArgs.blobVersionedHashes.length > 0) {
+    const newBlobLimit = computeLimitEMA(maxFeePerBlobGas, TX_BLOBPRICE_LIMIT, TX_ALPHA);
+    console.log('Updating TX_BLOBPRICE_LIMIT: %d -> %d', TX_BLOBPRICE_LIMIT, newBlobLimit);
+    TX_BLOBPRICE_LIMIT = newBlobLimit;
+
     if (maxFeePerBlobGas > TX_BLOBPRICE_LIMIT) {
       console.error('Blob fees too high: %d > %d', maxFeePerBlobGas, TX_BLOBPRICE_LIMIT );
-      const newBlobLimit = computeLimitEMA(maxFeePerBlobGas, TX_BLOBPRICE_LIMIT, TX_ALPHA);
-      console.log('Updating TX_BLOBPRICE_LIMIT: %d -> %d', TX_BLOBPRICE_LIMIT, newBlobLimit);
-      TX_BLOBPRICE_LIMIT = newBlobLimit;
       return true;
     }
   }
+
   return false;
 }
 
