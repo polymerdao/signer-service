@@ -96,7 +96,7 @@ async function feesTooHigh(transactionArgs: TransactionArgs)  {
 
   const now = Math.floor(Date.now() / 1000);
   const elapsed_secs = now - lastUpdateTime;
-  const doUpdate = (elapsed_secs < EMA_UPDATE_DELTA_SECS);
+  const doUpdate = (elapsed_secs >= EMA_UPDATE_DELTA_SECS);
   const gasPrice = (maxFeePerGas + maxPriorityFeePerGas);
   let rejectTxn = false;
 
