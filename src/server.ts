@@ -19,7 +19,10 @@ let keyRingId = process.env.KEY_RING_ID!
 let keyId = process.env.KEY_ID!
 let TX_GASPRICE_LIMIT = BigInt(process.env.TXPRICE_LIMIT!)
 let TX_BLOBPRICE_LIMIT = BigInt(process.env.TX_BLOBPRICE_LIMIT!)
-let TX_ALPHA = BigInt(process.env.TX_ALPHA ?? "1")
+let TX_ALPHA = BigInt(process.env.TX_ALPHA ?? "1") // default alpha is equivalent to 0.01
+const EMA_UPDATE_DELTA_SECS = BigInt(process.env.EMA_UPDATE_DELTA_SECS ?? "60") // default update frequency is once a minute
+
+let lastUpdateTime = 0;
 
 kmsProvider.setPath({
   projectId: PROJECT_ID,
@@ -91,27 +94,41 @@ async function feesTooHigh(transactionArgs: TransactionArgs)  {
      maxFeePerBlobGas = BigInt(transactionArgs.maxFeePerBlobGas);
   }
 
-  var gasPrice = (maxFeePerGas + maxPriorityFeePerGas);
-  const newGasLimit = computeLimitEMA(gasPrice, TX_GASPRICE_LIMIT, TX_ALPHA);
-  console.log('Updating TX_GASPRICE_LIMIT: %d -> %d', TX_GASPRICE_LIMIT, newGasLimit);
-  TX_GASPRICE_LIMIT = newGasLimit;
-  if (gasPrice > TX_GASPRICE_LIMIT) {
-    console.error('Tx fees too high: %d > %d', gasPrice, TX_GASPRICE_LIMIT);
-    return true;
+  const now = Math.floor(Date.now() / 1000);
+  const elapsed_secs = now - lastUpdateTime;
+  const doUpdate = (elapsed_secs < EMA_UPDATE_DELTA_SECS);
+  const gasPrice = (maxFeePerGas + maxPriorityFeePerGas);
+  let rejectTxn = false;
+
+  if (doUpdate) {
+      lastUpdateTime = now;
+
+      // update gas limit
+      const newGasLimit = computeLimitEMA(gasPrice, TX_GASPRICE_LIMIT, TX_ALPHA);
+      console.log('Updating TX_GASPRICE_LIMIT: %d -> %d', TX_GASPRICE_LIMIT, newGasLimit);
+      TX_GASPRICE_LIMIT = newGasLimit;
+
+      // update blob limit
+      const newBlobLimit = computeLimitEMA(maxFeePerBlobGas, TX_BLOBPRICE_LIMIT, TX_ALPHA);
+      console.log('Updating TX_BLOBPRICE_LIMIT: %d -> %d', TX_BLOBPRICE_LIMIT, newBlobLimit);
+      TX_BLOBPRICE_LIMIT = newBlobLimit;
   }
 
-  if (transactionArgs.blobVersionedHashes && transactionArgs.blobVersionedHashes.length > 0) {
-    const newBlobLimit = computeLimitEMA(maxFeePerBlobGas, TX_BLOBPRICE_LIMIT, TX_ALPHA);
-    console.log('Updating TX_BLOBPRICE_LIMIT: %d -> %d', TX_BLOBPRICE_LIMIT, newBlobLimit);
-    TX_BLOBPRICE_LIMIT = newBlobLimit;
+  // check gas price limit
+  if (gasPrice > TX_GASPRICE_LIMIT) {
+    console.error('Tx fees too high: %d > %d', gasPrice, TX_GASPRICE_LIMIT);
+    rejectTxn = true;
+  }
 
+  // check blob price limits if applicable
+  if (transactionArgs.blobVersionedHashes && transactionArgs.blobVersionedHashes.length > 0) {
     if (maxFeePerBlobGas > TX_BLOBPRICE_LIMIT) {
       console.error('Blob fees too high: %d > %d', maxFeePerBlobGas, TX_BLOBPRICE_LIMIT );
-      return true;
+      rejectTxn = true;
     }
   }
 
-  return false;
+  return rejectTxn;
 }
 
 async function handleEthSignTransaction(transactionArgs: TransactionArgs) {
