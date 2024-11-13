@@ -5,6 +5,7 @@ import { KMSWallets } from "./web3-kms-signer/kms-wallets";
 import { Signer } from "./web3-kms-signer/core";
 import { loadKZG } from "kzg-wasm";
 
+const minBigInt = (a: bigint, b: bigint): bigint => (a < b ? a : b);
 
 const app = fastify({
   logger: true,
@@ -19,8 +20,8 @@ let keyRingId = process.env.KEY_RING_ID!
 let keyId = process.env.KEY_ID!
 let TX_GASPRICE_LIMIT = BigInt(process.env.TXPRICE_LIMIT!)
 let TX_BLOBPRICE_LIMIT = BigInt(process.env.TX_BLOBPRICE_LIMIT!)
-let TX_ALPHA_INCREASE = BigInt(process.env.TX_ALPHA_INCREASE ?? "1") // default alpha is equivalent to 0.01, used to compute increasing limits
-let TX_ALPHA_DECREASE = BigInt(process.env.TX_ALPHA_DECREASE ?? "10") // default alpha is equivalent to 0.1, used to compute decreasing limits
+let TX_ALPHA_INCREASE = minBigInt(BigInt(process.env.TX_ALPHA_INCREASE ?? "1"), BigInt(100)) // default alpha is equivalent to 0.01, used to compute increasing limits
+let TX_ALPHA_DECREASE = minBigInt(BigInt(process.env.TX_ALPHA_DECREASE ?? "10"), BigInt(100)) // default alpha is equivalent to 0.1, used to compute decreasing limits
 const EMA_UPDATE_DELTA_SECS = BigInt(process.env.EMA_UPDATE_DELTA_SECS ?? "60") // default update frequency is once a minute
 
 let lastUpdateTime = 0;
