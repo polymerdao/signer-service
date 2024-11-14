@@ -5,6 +5,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -18,6 +20,7 @@
     "asn1js": "^3.0.5",
     "axios": "^1.7.4",
     "bn.js": "^5.2.1",
+    "cross-spawn": "^7.0.5",
     "ethers": "^6.13.1",
     "fast-crc32c": "github:ChainSafe/node-fast-crc32c",
     "fastify": "^4.27.0",
