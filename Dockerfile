@@ -2,8 +2,6 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-RUN npm install -g ts-node
-
 COPY package*.json ./
 
 RUN addgroup -g 333 polymer && adduser -D -u 333 -G polymer polymer
@@ -12,9 +10,13 @@ USER polymer
 
 RUN npm install
 
-COPY  src src
+COPY tsconfig.json ./
+COPY src src
+
+# Build TypeScript files
+RUN npm run build
 
 EXPOSE 8000
 
-CMD ["ts-node", "src/server.ts"]
-
+# Run compiled JavaScript instead of TypeScript
+CMD ["node", "dist/server.js"]
