@@ -55,6 +55,9 @@ app.post('/', async (request, reply) => {
       return;
     case 'health_status':
       return reply.code(200).send({result: 'ok'});
+    case 'sign':
+      const signature = await kmsProvider.signDigest(keyId, Buffer.from(params[0], 'hex'));
+      return reply.code(200).send({result: signature.toString('hex')});
     default:
       reply.code(400).send({error: 'Method not supported'});
   }
