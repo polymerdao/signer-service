@@ -30,6 +30,11 @@ kmsProvider.setPath({
   keyRingId: keyRingId
 });
 
+function bigintToBuffer(bigint: bigint): Buffer {
+  const hex = bigint.toString(16);
+  return Buffer.from(hex.padStart(hex.length + (hex.length % 2), '0'), 'hex');
+}
+
 app.post('/', async (request, reply) => {
   const {method, params} = request.body as { method: string, params: any };
 
@@ -55,6 +60,10 @@ app.post('/', async (request, reply) => {
       return;
     case 'health_status':
       return reply.code(200).send({result: 'ok'});
+    case 'sign':
+        const signature = await wallets.ecsign({keyId: keyId}, Buffer.from(params[0].slice(2), 'hex'), 1);
+        const res = Buffer.concat([signature.r, signature.s, bigintToBuffer(signature.v)]).toString('hex');
+      return reply.code(200).send({result: res});
     default:
       reply.code(400).send({error: 'Method not supported'});
   }
