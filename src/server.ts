@@ -61,7 +61,7 @@ app.post('/', async (request, reply) => {
     case 'health_status':
       return reply.code(200).send({result: 'ok'});
     case 'sign':
-        const signature = await wallets.ecsign({keyId: keyId}, Buffer.from(params[0].slice(2), 'hex'), 1);
+        const signature = await wallets.ecsign({keyId: keyId}, Buffer.from(params[0].slice(2), 'hex'), 0);
         const res = Buffer.concat([signature.r, signature.s, bigintToBuffer(signature.v)]).toString('hex');
       return reply.code(200).send({result: res});
     default:
