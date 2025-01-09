@@ -4,6 +4,7 @@ import { KMSProviderGCP } from "./KMSProviderGCP";
 import { KMSWallets } from "./web3-kms-signer/kms-wallets";
 import { Signer } from "./web3-kms-signer/core";
 import { loadKZG } from "kzg-wasm";
+import * as console from "node:console";
 
 
 const app = fastify({
@@ -61,8 +62,13 @@ app.post('/', async (request, reply) => {
     case 'health_status':
       return reply.code(200).send({result: 'ok'});
     case 'sign':
-        const signature = await wallets.ecsign({keyId: keyId}, Buffer.from(params[0].slice(2), 'hex'), 1);
-        const res = Buffer.concat([signature.r, signature.s, bigintToBuffer(signature.v)]).toString('hex');
+      let digest = Buffer.from(params[0].slice(2), 'hex');
+      const signature = await wallets.ecsign({keyId: keyId}, digest, 1);
+      const rHex = signature.r.toString('hex').padStart(64, '0');
+      const sHex = signature.s.toString('hex').padStart(64, '0');
+      const rPadded = Buffer.from(rHex, 'hex');
+      const sPadded = Buffer.from(sHex, 'hex');
+      const res = Buffer.concat([rPadded, sPadded, bigintToBuffer(signature.v)]).toString('hex');
       return reply.code(200).send({result: res});
     default:
       reply.code(400).send({error: 'Method not supported'});
