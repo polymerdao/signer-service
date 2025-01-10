@@ -5,6 +5,7 @@ import { KMSWallets } from "./web3-kms-signer/kms-wallets";
 import { Signer } from "./web3-kms-signer/core";
 import { loadKZG } from "kzg-wasm";
 
+const minBigInt = (a: bigint, b: bigint): bigint => (a < b ? a : b);
 
 const app = fastify({
   logger: true,
@@ -19,7 +20,8 @@ let keyRingId = process.env.KEY_RING_ID!
 let keyId = process.env.KEY_ID!
 let TX_GASPRICE_LIMIT = BigInt(process.env.TXPRICE_LIMIT!)
 let TX_BLOBPRICE_LIMIT = BigInt(process.env.TX_BLOBPRICE_LIMIT!)
-let TX_ALPHA = BigInt(process.env.TX_ALPHA ?? "1") // default alpha is equivalent to 0.01
+let TX_ALPHA_INCREASE = minBigInt(BigInt(process.env.TX_ALPHA_INCREASE ?? "1"), BigInt(100)) // default alpha is equivalent to 0.01, used to compute increasing limits
+let TX_ALPHA_DECREASE = minBigInt(BigInt(process.env.TX_ALPHA_DECREASE ?? "10"), BigInt(100)) // default alpha is equivalent to 0.1, used to compute decreasing limits
 const EMA_UPDATE_DELTA_SECS = BigInt(process.env.EMA_UPDATE_DELTA_SECS ?? "60") // default update frequency is once a minute
 
 let lastUpdateTime = 0;
@@ -77,11 +79,13 @@ app.get('/address', async (_, reply) => {
 * Computes a new gas limit using exponential moving average.
 * @param price Current transaction price
 * @param limit Current gas limit
-* @param alpha Weighting factor (percentage multiplier)
 * @returns New gas limit
 * @brief Assumes that all inputs are non-negative
 */
-function computeLimitEMA(price: bigint, limit: bigint, alpha: bigint) {
+function computeLimitEMA(price: bigint, limit: bigint) {
+  // adjust increases and decreases separately
+  // we can be more agressive on decreasing price limits
+  const alpha = (price > limit) ? TX_ALPHA_INCREASE : TX_ALPHA_DECREASE;
   return (price - limit) * alpha / BigInt(100) + limit;
 }
 
@@ -112,12 +116,12 @@ async function feesTooHigh(transactionArgs: TransactionArgs)  {
       lastUpdateTime = now;
 
       // update gas limit
-      const newGasLimit = computeLimitEMA(gasPrice, TX_GASPRICE_LIMIT, TX_ALPHA);
+      const newGasLimit = computeLimitEMA(gasPrice, TX_GASPRICE_LIMIT);
       console.log('Updating TX_GASPRICE_LIMIT: %d -> %d', TX_GASPRICE_LIMIT, newGasLimit);
       TX_GASPRICE_LIMIT = newGasLimit;
 
       // update blob limit
-      const newBlobLimit = computeLimitEMA(maxFeePerBlobGas, TX_BLOBPRICE_LIMIT, TX_ALPHA);
+      const newBlobLimit = computeLimitEMA(maxFeePerBlobGas, TX_BLOBPRICE_LIMIT);
       console.log('Updating TX_BLOBPRICE_LIMIT: %d -> %d', TX_BLOBPRICE_LIMIT, newBlobLimit);
       TX_BLOBPRICE_LIMIT = newBlobLimit;
   }
